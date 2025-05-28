@@ -1,0 +1,205 @@
+!
+{# Logic that is applied to all networkes #}
+! Base Config for {{ network.hostname }}
+! This device is a {{ network.model }} running {{ network.os }}
+!
+{#  #}
+{#  #}
+{# Staging logic for Cisco IOS (switch or router) #}
+{%  if network.os=='ios'  %}
+configure terminal
+!
+hostname {{ network.hostname }}
+!
+{# Jinja loop to add local users pulled from file #}
+{% for user in baseline['local_users'] %}
+username {{ user['username'] }} privilege {{ user['privilege'] }} secret {{ user['secret'] }}
+{% endfor %}
+!
+aaa authentication login default local
+aaa authorization exec default local
+!
+ip domain-name {{ baseline ['domain'] }}
+!
+line con 0
+  exec-timeout {{ baseline ['mgmt_timeout']}} 0
+!
+! ====================================================================================
+! Run this command on it's own single line! It takes a while to complete but needs
+! to be done after hostname & domain name have been added to the network.
+! ====================================================================================
+!
+crypto key generate rsa modulus 2048 general-keys
+!
+{%  endif %}
+{#  #}
+{# Staging logic for Cisco IOS specific to switches #}
+{%  if network.os=='ios' and 'SW' in network.hostname %}
+ip name-server {{ baseline ['name_server1'] }}
+ip name-server {{ baseline ['name_server2'] }}
+!
+ntp server {{ baseline ['ntp_server1'] }} iburst
+ntp server {{ baseline ['ntp_server2'] }} prefer iburst
+!
+vlan {{ baseline ['mgmt_vlan'] }}
+name INBAND_MGMT
+!
+interface vlan {{ baseline ['mgmt_vlan'] }}
+  description INBAND_MGMT
+  no ip redirects
+  no ip proxy-arp
+  no ip unreachables
+  ip address {{ network.mgmt_ip | ansible.utils.ipaddr('address') }} {{ network.mgmt_ip | ansible.utils.ipaddr('netmask') }}
+  no shutdown
+!
+interface GigabitEthernet1/0/1
+ description INBAND_MGMT TEMP
+ switchport trunk allowed vlan {{ baseline ['mgmt_vlan'] }}
+ switchport mode trunk
+!
+ip default gateway {{ network.mgmt_ip | ansible.utils.nthhost(1) }}
+!
+line vty 0 15
+  exec-timeout {{ baseline ['mgmt_timeout']}} 0
+  privilege level 15
+  transport input ssh
+!
+end
+write
+{%  endif %}
+{# Staging logic for Cisco IOS specific to ISR routers #}
+{%  if network.os=='ios' and 'RTR' in network.hostname %}
+vrf definition {{ baseline ['cisco_mgmt_vrf'] }}
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+interface GigabitEthernet0
+  description OOB_MGMT
+  vrf forwarding {{ baseline ['cisco_mgmt_vrf'] }}
+  ip address {{ network.mgmt_ip | ansible.utils.ipaddr('address') }} {{ network.mgmt_ip | ansible.utils.ipaddr('netmask') }}
+  no ip redirects
+  no ip unreachables
+  no ip proxy-arp
+  no shutdown
+!
+ip name-server vrf {{ baseline ['cisco_mgmt_vrf'] }} {{ baseline ['name_server1'] }}
+ip name-server vrf {{ baseline ['cisco_mgmt_vrf'] }} {{ baseline ['name_server2'] }}
+!
+ntp server vrf {{ baseline ['cisco_mgmt_vrf'] }} {{ baseline ['ntp_server1'] }} iburst
+ntp server vrf {{ baseline ['cisco_mgmt_vrf'] }} {{ baseline ['ntp_server2'] }} iburst
+!
+ip route vrf {{ baseline ['cisco_mgmt_vrf'] }} 0.0.0.0 0.0.0.0 {{ network.mgmt_ip | ansible.utils.nthhost(1) }}
+!
+line vty 0 4
+  exec-timeout {{ baseline ['mgmt_timeout']}} 0
+  privilege level 15
+  transport input ssh
+!
+end
+write
+!
+{%  endif %}
+{#  #}
+{# Staging logic for all Arista EOS platform#}
+{%  if network.os=='eos' %}
+!  Provisioning steps are assuming the switch has just been unboxed and is being powered up for the first time.
+!  Once device is booted log into the switch with username "admin"
+!  At the "localhost>" prompt enter "zerotouch disable"
+!  The switch will now reboot.
+!
+configure terminal
+!
+hostname {{ network.hostname }}
+!
+ip routing
+!
+aaa authorization exec default local
+!
+{# Jinja loop to add local users pulled from file #}
+{% for user in baseline['local_users'] %}
+username {{ user['username'] }} privilege {{ user['privilege'] }} role {{ user['role'] }} secret {{ user['secret'] }}
+{% endfor %}
+!
+dns domain {{ baseline ['domain'] }}
+!
+management ssh
+   idle-timeout {{ baseline ['mgmt_timeout']}}
+   login timeout 90
+!
+{%  endif %}
+{#  #}
+{# Staging logic for Arista EOS that is not 710P platform #}
+{%  if network.os=='eos' and '710P' not in network.model %}
+vrf instance {{ baseline ['arista_mgmt_vrf'] }}
+!
+interface Management1
+   vrf {{ baseline ['arista_mgmt_vrf'] }}
+   ip address {{ network.mgmt_ip }}
+   no shutdown
+!
+ip route vrf {{ baseline ['arista_mgmt_vrf'] }} 0.0.0.0/0 {{ network.mgmt_ip | ansible.utils.nthhost(1) }}
+!
+ip name-server vrf {{ baseline ['arista_mgmt_vrf'] }} {{ baseline ['name_server1'] }}
+ip name-server vrf {{ baseline ['arista_mgmt_vrf'] }} {{ baseline ['name_server2'] }}
+!
+ntp server vrf {{ baseline ['arista_mgmt_vrf'] }} {{ baseline ['ntp_server1'] }} iburst
+ntp server vrf {{ baseline ['arista_mgmt_vrf'] }} {{ baseline ['ntp_server2'] }} prefer iburst
+!
+management api http-commands
+   no shutdown
+   !
+   vrf {{ baseline ['arista_mgmt_vrf'] }}
+      no shutdown
+!
+end
+write
+!
+{%  endif %}
+{# Staging logic for Arista EOS 710P platform (no MGMT port or VRFs #}
+{%  if network.os=='eos' and '710P' in network.model %}
+interface Ethernet1
+   description INBAND_MGMT
+   no switchport
+   ip address {{ network.mgmt_ip }}
+   no shutdown
+!
+ip name-server vrf default {{ baseline ['name_server1'] }}
+ip name-server vrf default {{ baseline ['name_server2'] }}
+!
+ntp server vrf default {{ baseline ['ntp_server1'] }} iburst
+ntp server vrf default {{ baseline ['ntp_server2'] }} prefer iburst
+!
+management api http-commands
+   no shutdown
+!
+end
+write
+!
+{%  endif %}
+{# Staging logic for Palo Alto platform #}
+{%  if network.os=='panos' %}
+! Default login is admin/admin
+! You will see a login screen but it will not work until
+! device is fully booted, you will just get login errors
+!
+configure
+set deviceconfig system ip-address {{ network.mgmt_ip }} netmask {{ network.mgmt_ip | ansible.utils.ipaddr('netmask') }} default-gateway {{ network.mgmt_ip | ansible.utils.nthhost(1) }} dns-setting servers primary {{ baseline ['name_server1'] }}
+set deviceconfig system hostname {{ network.hostname }}
+set deviceconfig system domain {{ baseline ['domain'] }}
+{# Need to add logic for adding usernames #}
+set deviceconfig system dns-setting servers primary {{ baseline ['name_server1'] }}
+set deviceconfig system dns-setting servers secondary {{ baseline ['name_server2'] }}
+system ntp-servers primary-ntp-server ntp-server-address {{ baseline ['ntp_server1'] }}
+system ntp-servers secondary-ntp-server ntp-server-address {{ baseline ['ntp_server2'] }}
+{% for user in baseline['local_users'] %}
+set mgt-config users {{ user['username'] }} permissions role-based superuser yes
+set mgt-config users {{ user['username'] }} password <Will need to input password>
+{% endfor %}
+commit description "initial staging"
+exit
+!
+{%  endif %}

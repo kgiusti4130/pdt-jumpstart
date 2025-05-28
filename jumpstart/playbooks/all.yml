@@ -1,0 +1,7 @@
+---
+
+- import_playbook: create_base_configs.yml
+- import_playbook: create_dhcpd_configs.yml
+- import_playbook: create_ztp_configs.yml
+- import_playbook: all_inventory_builder.yml
+- import_playbook: avd_inventory_builder.yml

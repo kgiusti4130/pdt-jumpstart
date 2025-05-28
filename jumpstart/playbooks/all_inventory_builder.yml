@@ -1,0 +1,22 @@
+- name: Build Ansible Inventory file
+  connection: local
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    - name: Register variables
+      ansible.builtin.include_vars:
+        file: "../vars/baseline.yaml"
+        name: baseline
+
+    - name: "Reading in CSV file"
+      community.general.read_csv:
+        path: ../datafiles/devices.csv
+      register: switches
+
+    - name: Generate created_inventory.yml file
+      ansible.builtin.template:
+        src: ../templates/all_inventory.j2
+        dest: ../all_created_inventory.yml
+        mode: '0755'

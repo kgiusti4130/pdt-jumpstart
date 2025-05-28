@@ -1,0 +1,77 @@
+---
+# This file is generated via all_inventory_builder.yml playbook
+{{ baseline ['site_name'] }}:
+  children:
+    {{ baseline ['site_name'] }}_FABRIC:
+      children:
+        {{ baseline ['site_name'] }}_ARISTA_SWITCHES:
+          hosts:
+
+############################################
+#          {{ baseline ['site_name'] }} CORE SWITCHES            #
+############################################
+{% for item in switches.list if item.os == 'eos' and 'CS' in item.hostname  %}
+            {{ item.hostname }}:
+              ansible_host: {{ item.mgmt_ip | ansible.utils.ipaddr('address') }}
+              is_deployed: true
+{% endfor %}
+
+############################################
+#     {{ baseline ['site_name'] }} DISTRIBUTION SWITCHES         #
+############################################
+{% for item in switches.list if item.os == 'eos' and 'DS' in item.hostname  %}
+            {{ item.hostname }}:
+              ansible_host: {{ item.mgmt_ip | ansible.utils.ipaddr('address') }}
+              is_deployed: true
+{% endfor %}
+
+############################################
+#     {{ baseline ['site_name'] }} INET SWITCHES                 #
+############################################
+{% for item in switches.list if item.os == 'eos' and 'INET' in item.hostname  %}
+            {{ item.hostname }}:
+              ansible_host: {{ item.mgmt_ip | ansible.utils.ipaddr('address') }}
+              is_deployed: true
+{% endfor %}
+
+############################################
+#     {{ baseline ['site_name'] }} MGMT SWITCHES                 #
+############################################
+{% for item in switches.list if item.os == 'eos' and 'MGMT' in item.hostname  %}
+            {{ item.hostname }}:
+              ansible_host: {{ item.mgmt_ip | ansible.utils.ipaddr('address') }}
+              is_deployed: true
+{% endfor %}
+
+        {{ baseline ['site_name'] }}_CISCO_SWITCHES:
+          hosts:
+############################################
+#          {{ baseline ['site_name'] }} CISCO SWITCHES           #
+############################################
+{% for item in switches.list if item.os == 'ios' and 'SW' in item.hostname  %}
+            {{ item.hostname }}:
+              ansible_host: {{ item.mgmt_ip | ansible.utils.ipaddr('address') }}
+{% endfor %}
+
+        {{ baseline ['site_name'] }}_CISCO_ROUTERS:
+          hosts:
+############################################
+#          {{ baseline ['site_name'] }} CISCO ROUTERS           #
+############################################
+{% for item in switches.list if item.os == 'ios' and 'RTR' in item.hostname  %}
+            {{ item.hostname }}:
+              ansible_host: {{ item.mgmt_ip | ansible.utils.ipaddr('address') }}
+{% endfor %}
+
+############################################
+#                Groups                    #
+############################################
+
+    {{ baseline ['site_name'] }}_EOS:
+      children:
+        {{ baseline ['site_name'] }}_ARISTA_SWITCHES:
+
+    {{ baseline ['site_name'] }}_IOS:
+      children:
+        {{ baseline ['site_name'] }}_CISCO_SWITCHES:
+        {{ baseline ['site_name'] }}_CISCO_ROUTERS:

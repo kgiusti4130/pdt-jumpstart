@@ -1,0 +1,77 @@
+---
+# This file is generated via all_inventory_builder.yml playbook
+TOLEDO:
+  children:
+    TOLEDO_FABRIC:
+      children:
+        TOLEDO_ARISTA_SWITCHES:
+          hosts:
+
+############################################
+#          TOLEDO CORE SWITCHES            #
+############################################
+            SW8-CS1:
+              ansible_host: 10.1.2.34
+              is_deployed: true
+            SW9-CS2:
+              ansible_host: 10.1.2.35
+              is_deployed: true
+
+############################################
+#     TOLEDO DISTRIBUTION SWITCHES         #
+############################################
+            SW5-DS1:
+              ansible_host: 10.1.2.31
+              is_deployed: true
+            SW6-DS2:
+              ansible_host: 10.1.2.32
+              is_deployed: true
+
+############################################
+#     TOLEDO INET SWITCHES                 #
+############################################
+            SW10-INET1:
+              ansible_host: 10.1.2.36
+              is_deployed: true
+
+############################################
+#     TOLEDO MGMT SWITCHES                 #
+############################################
+            SW7-MGMT1:
+              ansible_host: 10.1.2.33
+              is_deployed: true
+
+        TOLEDO_CISCO_SWITCHES:
+          hosts:
+############################################
+#          TOLEDO CISCO SWITCHES           #
+############################################
+            SW1:
+              ansible_host: 10.1.1.31
+            SW2:
+              ansible_host: 10.1.1.32
+            SW3:
+              ansible_host: 10.1.1.33
+            SW4:
+              ansible_host: 10.1.1.34
+
+        TOLEDO_CISCO_ROUTERS:
+          hosts:
+############################################
+#          TOLEDO CISCO ROUTERS           #
+############################################
+            RTR1:
+              ansible_host: 10.1.3.32
+
+############################################
+#                Groups                    #
+############################################
+
+    TOLEDO_EOS:
+      children:
+        TOLEDO_ARISTA_SWITCHES:
+
+    TOLEDO_IOS:
+      children:
+        TOLEDO_CISCO_SWITCHES:
+        TOLEDO_CISCO_ROUTERS:

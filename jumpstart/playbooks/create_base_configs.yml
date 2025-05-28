@@ -1,0 +1,30 @@
+---
+- name: Create staging configs from CSV data
+  gather_facts: false
+  hosts: localhost
+
+  tasks:
+
+    - name: Register variables
+      ansible.builtin.include_vars:
+        file: "../vars/baseline.yaml"
+        name: baseline
+
+    - name: "Reading in CSV file"
+      community.general.read_csv:
+        path: ../datafiles/devices.csv
+      register: network_devices
+
+    - name: Creates base-configs directory if does not exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "../base-configs/"
+
+    - name: Create Base Config for each device in CSV File
+      ansible.builtin.template: src=../templates/base_cfg_template.j2 dest=../base-configs/{{ network.hostname }}.cfg
+      loop: "{{ network_devices.list }}"
+      loop_control:
+        loop_var: network

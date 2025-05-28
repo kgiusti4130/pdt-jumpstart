@@ -1,0 +1,13 @@
+hostname,mgmt_ip,os,model,mac,dhcp_enabled
+SW1,10.1.1.31/24,ios,2960X
+SW2,10.1.1.32/24,ios,2960S
+SW3,10.1.1.33/24,ios,3750X
+SW4,10.1.1.34/24,ios,4507R
+SW5-DS1,10.1.2.31/24,eos,710P-12,aa:aa:bb:bb:cc:a5,FALSE
+SW6-DS2,10.1.2.32/24,eos,710P-16P,aa:aa:bb:bb:cc:a6,FALSE
+SW7-MGMT1,10.1.2.33/24,eos,720XP-48ZC2,aa:aa:bb:bb:cc:a7
+SW8-CS1,10.1.2.34/24,eos,7020SR,aa:aa:bb:bb:cc:a8
+SW9-CS2,10.1.2.35/24,eos,72080SR,aa:aa:bb:bb:cc:a9
+SW10-INET1,10.1.2.36/24,eos,7050SX3,aa:aa:bb:bb:cc:b1
+FW1,10.1.3.31/24,panos,820
+RTR1,10.1.3.32/24,ios,4451

@@ -1,0 +1,31 @@
+
+server_ip: 172.16.4.100/22
+eos_file: EOS-4.30.4M
+name_server1: 8.8.8.8
+name_server2: 208.67.222.222
+domain: home_lab.local
+arista_mgmt_vrf: MGMT
+cisco_mgmt_vrf: Mgmt-intf
+mgmt_vlan: 4090
+mgmt_timeout: 30
+site_name: TOLEDO
+org_name: MY_ORG
+
+#Need to add NTP server logic
+ntp_server1: pool.ntp.org
+ntp_server2: time.google.com
+
+# local users
+local_users:
+  - username: admin
+    privilege: 15
+    role: network-admin
+    secret: 'staging_password'
+  - username: operator
+    privilege: 15
+    role: network-admin
+    secret: 'staging_password'
+  - username: test
+    privilege: 15
+    role: network-admin
+    secret: 'staging_password'
